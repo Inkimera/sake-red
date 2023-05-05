@@ -1,0 +1,6 @@
+[submodule "src/vendor/raylib"]
+	path = src/vendor/raylib
+	url = https://github.com/raysan5/raylib.git
+[submodule "src/vendor/zig-toml"]
+	path = src/vendor/zig-toml
+	url = https://github.com/sam701/zig-toml.git

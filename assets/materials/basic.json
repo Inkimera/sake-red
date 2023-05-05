@@ -1,0 +1,19 @@
+{
+  "ambient" : [0.1, 0.1, 0.1],
+  "albedo" : [1.0, 0.66, 0.2],
+  "cangiante" : [0.2, 0.1, 0.1],
+  "shadow" : [0.0, 0.0, 0.0],
+  "emission" : [0.0, 0.0, 0.0],
+  "substrate" : [1.0, 1.0, 1.0],
+  "diffuse_factor" : 0.3,
+  "shade_wrap" : 0.5,
+  "dark_edges" : 0.5,
+  "dilute" : 0.5,
+  "dilute_area" : 0.99,
+  "high_area" : 0.0,
+  "specular_intensity" : 0.0,
+  "specular_diffuse" : 0.99,
+  "specular_transparency" : 0.5,
+  "specular_depth" : 100.0,
+	"disable_lighting": 0
+}
