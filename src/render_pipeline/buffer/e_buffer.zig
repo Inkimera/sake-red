@@ -10,8 +10,8 @@ pub const EBuffer = struct {
     edge: raylib.Texture,
 
     pub fn init() EBuffer {
-        const width = raylib.GetScreenWidth();
-        const height = raylib.GetScreenHeight();
+        const width = raylib.GetRenderWidth();
+        const height = raylib.GetRenderHeight();
         var ebuf = std.mem.zeroes(EBuffer);
         ebuf.id = rlgl.rlLoadFramebuffer(width, height);
         ebuf.width = width;

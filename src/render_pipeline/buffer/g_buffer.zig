@@ -13,8 +13,8 @@ pub const GBuffer = struct {
     depth: raylib.Texture,
 
     pub fn init() GBuffer {
-        const width = raylib.GetScreenWidth();
-        const height = raylib.GetScreenHeight();
+        const width = raylib.GetRenderWidth();
+        const height = raylib.GetRenderHeight();
         var gbuf = std.mem.zeroes(GBuffer);
         gbuf.id = rlgl.rlLoadFramebuffer(width, height);
         gbuf.width = width;

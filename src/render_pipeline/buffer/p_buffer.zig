@@ -12,8 +12,8 @@ pub const PBuffer = struct {
     darkened_edge: raylib.Texture,
 
     pub fn init() PBuffer {
-        const width = raylib.GetScreenWidth();
-        const height = raylib.GetScreenHeight();
+        const width = raylib.GetRenderWidth();
+        const height = raylib.GetRenderHeight();
         var pbuf = std.mem.zeroes(PBuffer);
         pbuf.id = rlgl.rlLoadFramebuffer(width, height);
         pbuf.width = width;

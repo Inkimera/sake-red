@@ -1,0 +1,14 @@
+{
+"ambient" : [0.1, 0.1, 0.1],
+"albedo" : [1.0, 1.00, 1.00],
+"shadow" : [0.03, 0.0, 0.03],
+"emission" : [0.0, 0.0, 0.0],
+"shadow_wrap" : 0.2,
+"shadow_blur" : 0.3,
+"underpaint_wrap" : 1.0,
+"underpaint_blur" : 0.1,
+"specular_intensity" : 0.0,
+"disable_lighting": 0,
+"uv_wrap_x": 1.0,
+"uv_wrap_y": 1.0
+}

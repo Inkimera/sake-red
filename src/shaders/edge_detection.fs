@@ -4,26 +4,28 @@ in vec3 fragPosition;
 in vec2 fragTexCoord;
 
 uniform sampler2D SCREEN_TEXTURE;
-//uniform sampler2D NORMAL_TEXTURE;
+uniform sampler2D NORMAL_TEXTURE;
 uniform sampler2D DEPTH_TEXTURE;
+
+uniform float sdf_scale = 1.0;
 
 layout(location = 0) out vec4 finalEdge;
 
 vec4 rgbd(vec2 screen_uv)
 {
-  vec3 texelColor = texture(SCREEN_TEXTURE, screen_uv).rgb;
-  vec4 texelDepth = texture(DEPTH_TEXTURE, screen_uv);
-  //float zNear = 0.01; // camera z near
-  //float zFar = 10.0;  // camera z far
-  //float depth = (2.0 * zNear) / (zFar + zNear - texelDepth.x * (zFar - zNear));
-  //return vec4(texelColor.rgb, depth);
-  return vec4(texelColor.rgb, texelDepth.x);
+  vec3 texelColor = textureLod(NORMAL_TEXTURE, screen_uv, 1).rgb;
+  vec4 texelDepth = textureLod(DEPTH_TEXTURE, screen_uv, 1);
+  float zNear = 0.01; // camera z near
+  float zFar = 100.0;  // camera z far
+  float depth = (2.0 * zNear) / (zFar + zNear - texelDepth.x * (zFar - zNear));
+  return vec4(texelColor.rgb, depth);
+  //return vec4(texelColor.rgb, texelDepth.x);
 }
 
 // Performs a sobel edge detection on RGBD channels
 // -> Based on the sobel image processing operator by Sobel and Feldman 1968 
 //    [1968] A 3x3 Isotropic Gradient Operator for Image Processing
-vec3 edge(vec2 screen_size)
+float edge(vec2 screen_size)
 {
   float px = 1.0 / screen_size.x;
   float py = 1.0 / screen_size.y;
@@ -48,12 +50,15 @@ vec3 edge(vec2 screen_size)
   float rgbdVertical = length(vKernelMul);
   //float rgbdVertical = max(max(vKernelMul.r, vKernelMul.b), vKernelMul.g);
   float edgeMagnitude = length(vec2(rgbdHorizontal, rgbdVertical));
-  return vec3(edgeMagnitude);
+	float sdfValue = 2.0 * (1.0 - edgeMagnitude) - 1.0;
+	return sdfValue * sdf_scale;
 }
 
 void main()
 {
-  vec4 texelColor = texture(SCREEN_TEXTURE, fragTexCoord);
+  //vec4 texelColor = texture(SCREEN_TEXTURE, fragTexCoord);
   vec2 screen_size = vec2(textureSize(SCREEN_TEXTURE, 0));
-  finalEdge = vec4(edge(screen_size), 1.0);
+  finalEdge.rgb = vec3(edge(screen_size)); //vec3(1.0) / (vec3(edge(screen_size)) + vec3(1.0));
+	finalEdge.a = 1.0;
+  //finalEdge = vec4(edge(screen_size));
 }

@@ -10,15 +10,16 @@ pub const SBuffer = struct {
     shadow: raylib.Texture,
 
     pub fn init() SBuffer {
-        const width = raylib.GetScreenWidth();
-        const height = raylib.GetScreenHeight();
+        const width = 512; //raylib.GetScreenWidth();
+        const height = 512; //raylib.GetScreenHeight();
         var sbuf = std.mem.zeroes(SBuffer);
         sbuf.id = rlgl.rlLoadFramebuffer(width, height);
         sbuf.width = width;
         sbuf.height = height;
 
         if (sbuf.id > 0) {
-            rlgl.rlEnableFramsbuffer(sbuf.id);
+            rlgl.rlEnableFramebuffer(sbuf.id);
+            //rlgl.rlDisableColorBuffer();
 
             // Create depth texture: shadow
             sbuf.shadow.id = rlgl.rlLoadTextureDepth(width, height, false);
@@ -28,16 +29,13 @@ pub const SBuffer = struct {
             sbuf.shadow.mipmaps = 1;
 
             // Attach depth texture to FBO
-            rlgl.rlFramsbufferAttach(sbuf.id, sbuf.shadow.id, rlgl.RL_ATTACHMENT_DEPTH, rlgl.RL_ATTACHMENT_TEXTURE2D, 0);
-
-            // Activate required color draw buffers
-            rlgl.rlActiveDrawBuffers(0);
+            rlgl.rlFramebufferAttach(sbuf.id, sbuf.shadow.id, rlgl.RL_ATTACHMENT_DEPTH, rlgl.RL_ATTACHMENT_TEXTURE2D, 0);
 
             // Check if fbo is complete with attachments (valid)
-            if (rlgl.rlFramsbufferComplete(sbuf.id)) {
+            if (rlgl.rlFramebufferComplete(sbuf.id)) {
                 std.debug.print("MRT loaded\n", .{});
             }
-            rlgl.rlDisableFramsbuffer();
+            rlgl.rlDisableFramebuffer();
         } else {
             std.debug.print("MRT failed to load\n", .{});
         }
@@ -61,7 +59,6 @@ pub const SBuffer = struct {
         rlgl.rlDrawRenderBatchActive(); // Update and draw internal render batch
 
         rlgl.rlEnableFramebuffer(self.id); // Enable render target
-        rlgl.rlActiveDrawBuffers(1);
 
         // Set viewport and RLGL internal framebuffer size
         rlgl.rlViewport(0, 0, self.width, self.height);
