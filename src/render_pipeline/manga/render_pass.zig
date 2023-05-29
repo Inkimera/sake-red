@@ -5,11 +5,11 @@ const rlgl = @cImport(@cInclude("rlgl.h"));
 
 const shader = @import("../shader.zig");
 const model = @import("../model.zig");
-const light = @import("../../light.zig");
+const light = @import("../light.zig");
 const s_buffer = @import("../buffer/s_buffer.zig");
-const g_buffer = @import("../buffer/g_buffer.zig");
+const g_buffer = @import("buffer/g_buffer.zig");
 const e_buffer = @import("../buffer/e_buffer.zig");
-const p_buffer = @import("../buffer/p_buffer.zig");
+const p_buffer = @import("buffer/p_buffer.zig");
 
 const MAX_MODELS_PER_BATCH: usize = 16;
 const MAX_WEIGHTS: usize = 10;
@@ -67,17 +67,17 @@ fn render_quad(width: c_int, height: c_int) void {
 }
 
 pub const RenderPassClear = struct {
-    fn _run(_: *const RenderPassClear) void {
-        raylib.ClearBackground(raylib.WHITE);
+    fn _run(_: *const RenderPassClear, color: raylib.Color) void {
+        raylib.ClearBackground(color);
     }
 };
 
 pub const RenderPassShadowmap = struct {
     _shader: shader.Shader,
 
-    fn _run(self: *const RenderPassShadowmap, models: []*model.Model) void {
+    fn _run(self: *const RenderPassShadowmap, models: []*model.Model(shader.ToonShaderConfig)) void {
         var models_by_mat_idx: usize = 0;
-        var models_by_mat = std.mem.zeroes([MAX_MODELS_PER_BATCH]?*model.Model);
+        var models_by_mat = std.mem.zeroes([MAX_MODELS_PER_BATCH]?*model.Model(shader.ToonShaderConfig));
 
         const mats = [_]u32{ 3, 6 };
         for (mats) |mat| {
@@ -90,24 +90,18 @@ pub const RenderPassShadowmap = struct {
 
             for (models_by_mat) |mdl| {
                 if (mdl) |m| {
-                    const m_shader = m.model.materials[0].shader;
-                    m.model.materials[0].shader = self._shader.shader;
-                    rlgl.rlPushMatrix();
-                    rlgl.rlTranslatef(m.transform.x, m.transform.y, m.transform.z);
-                    raylib.DrawModel(m.model, raylib.Vector3{ .x = 0.0, .y = 0.0, .z = 0.0 }, 1.0, raylib.WHITE);
-                    rlgl.rlPopMatrix();
-                    m.model.materials[0].shader = m_shader;
+                    m.drawShadow(self._shader);
                 }
             }
-            models_by_mat = std.mem.zeroes([MAX_MODELS_PER_BATCH]?*model.Model);
+            models_by_mat = std.mem.zeroes([MAX_MODELS_PER_BATCH]?*model.Model(shader.ToonShaderConfig));
         }
     }
 };
 
 pub const RenderPassGeometry = struct {
-    fn _run(_: *const RenderPassGeometry, models: []*model.Model) void {
+    fn _run(_: *const RenderPassGeometry, sbuf: *const s_buffer.SBuffer, width: c_int, height: c_int, lights: []*light.Light, models: []*model.Model(shader.ToonShaderConfig)) void {
         var models_by_mat_idx: usize = 0;
-        var models_by_mat = std.mem.zeroes([MAX_MODELS_PER_BATCH]?*model.Model);
+        var models_by_mat = std.mem.zeroes([MAX_MODELS_PER_BATCH]?*model.Model(shader.ToonShaderConfig));
 
         const mats = [_]u32{ 3, 6 };
         for (mats) |mat| {
@@ -118,16 +112,33 @@ pub const RenderPassGeometry = struct {
                 }
             }
 
+            const l = lights[0];
+
+            const fov = 45.0;
+            const aspect = @intToFloat(f64, width) / @intToFloat(f64, height);
+            const top = fov * 0.5;
+            const right = top * aspect;
+            const light_proj_mat = raylib.MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
+            //const light_proj_mat = raylib.MatrixOrtho(-100.0, 100.0, -100.0, 100.0, 0.01, 1000.0);
+
+            const light_view_mat = raylib.MatrixLookAt(
+                l.position,
+                l.target,
+                raylib.Vector3{
+                    .x = 0.0,
+                    .y = 1.0,
+                    .z = 0.0,
+                },
+            );
+            //const light_mat = raylib.MatrixMultiply(light_proj_mat, light_view_mat);
+            const light_mat = raylib.MatrixMultiply(light_view_mat, light_proj_mat);
             for (models_by_mat) |mdl| {
                 if (mdl) |m| {
-                    m.shader_config.apply(m.shader);
-                    //rlgl.rlPushMatrix();
-                    //rlgl.rlTranslatef(m.transform.x, m.transform.y, m.transform.z);
-                    raylib.DrawModel(m.model, m.transform, 1.0, raylib.WHITE);
-                    //rlgl.rlPopMatrix();
+                    m.draw(light_mat, sbuf.shadow);
                 }
             }
-            models_by_mat = std.mem.zeroes([MAX_MODELS_PER_BATCH]?*model.Model);
+
+            models_by_mat = std.mem.zeroes([MAX_MODELS_PER_BATCH]?*model.Model(shader.ToonShaderConfig));
         }
     }
 };
@@ -358,8 +369,8 @@ pub const RenderPassSwap = struct {
         if (self._shader.getUniform("STYLE_TEXTURE")) |loc| {
             raylib.SetShaderValueTexture(self._shader.shader, loc, pbuf.style);
         }
-        const width = pbuf.width * raylib.RenderTextureDPI();
-        const height = pbuf.height * raylib.RenderTextureDPI();
+        const width = raylib.GetRenderWidth(); //pbuf.width * raylib.RenderTextureDPI();
+        const height = raylib.GetRenderHeight(); //pbuf.height * raylib.RenderTextureDPI();
 
         rlgl.rlEnableFramebuffer(0); // Enable default FBO render target
         // Set viewport and RLGL internal framebuffer size
@@ -587,29 +598,32 @@ pub const RenderPass = union(enum) {
         pbuf: *const p_buffer.PBuffer,
         camera: *const raylib.Camera,
         lights: []*light.Light,
-        models: []*model.Model,
+        models: []*model.Model(shader.ToonShaderConfig),
     ) void {
         switch (self.*) {
             .Clear => |pass| {
                 // Shadowmap
                 sbuf.beginBufferMode();
-                pass._run();
+                pass._run(raylib.BLACK);
                 sbuf.endBufferMode();
                 // Geometry
                 gbuf.beginBufferMode();
-                pass._run();
+                pass._run(raylib.SKYBLUE);
                 gbuf.endBufferMode();
                 // Edge
                 ebuf.beginBufferMode();
-                pass._run();
+                pass._run(raylib.BLACK);
                 ebuf.endBufferMode();
                 // Post Process
                 pbuf.beginBufferMode();
-                pass._run();
+                pass._run(raylib.WHITE);
                 pbuf.endBufferMode();
             },
             .Shadowmap => |pass| {
                 for (lights) |l| {
+                    if (l.cast_shadow == 0) {
+                        continue;
+                    }
                     var shadow_camera = raylib.Camera{
                         .position = l.position,
                         .target = l.target,
@@ -627,7 +641,7 @@ pub const RenderPass = union(enum) {
             .Geometry => |pass| {
                 gbuf.beginBufferMode();
                 self.begin(camera);
-                pass._run(models);
+                pass._run(sbuf, gbuf.width, gbuf.height, lights, models);
                 self.end();
                 gbuf.endBufferMode();
             },

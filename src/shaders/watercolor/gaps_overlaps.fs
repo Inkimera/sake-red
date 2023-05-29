@@ -8,8 +8,8 @@ uniform sampler2D EDGE_TEXTURE;
 uniform sampler2D BLEED_TEXTURE;
 uniform sampler2D CONTROL_TEXTURE;
 
-uniform vec3 substrate = vec3(1.0, 1.0, 1.0);
-uniform float go_radius = 3.0;
+uniform vec3 substrate = vec3(0.9, 0.9, 0.9);
+uniform float go_radius = 2.0;
 
 layout(location = 0) out vec4 finalStyle;
 
@@ -122,10 +122,10 @@ void main()
   float gaps_overlaps = ((1.0 - texelControl.b) * 0.5 - 0.5) * go_radius;
   //gaps_overlaps = gaps_overlaps * 0.5 - 0.5; 
   // contains the blending mask
-  float bleeding = length(texelBleed.rgb) / 3.0;
+  float bleeding = texelBleed.a;
 
   finalStyle = texelStyle;
-  float mask = finalStyle.a;
+  float mask = texelStyle.a;
   float go_threshold = 1.0 / go_radius;
 
   // make sure we are not considering emptiness or blending

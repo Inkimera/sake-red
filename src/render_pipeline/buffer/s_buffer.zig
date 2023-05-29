@@ -10,8 +10,8 @@ pub const SBuffer = struct {
     shadow: raylib.Texture,
 
     pub fn init() SBuffer {
-        const width = 512; //raylib.GetScreenWidth();
-        const height = 512; //raylib.GetScreenHeight();
+        const width = 4096; //raylib.GetScreenWidth();
+        const height = 4096; //raylib.GetScreenHeight();
         var sbuf = std.mem.zeroes(SBuffer);
         sbuf.id = rlgl.rlLoadFramebuffer(width, height);
         sbuf.width = width;
@@ -19,7 +19,7 @@ pub const SBuffer = struct {
 
         if (sbuf.id > 0) {
             rlgl.rlEnableFramebuffer(sbuf.id);
-            //rlgl.rlDisableColorBuffer();
+            rlgl.rlDisableColorBuffer();
 
             // Create depth texture: shadow
             sbuf.shadow.id = rlgl.rlLoadTextureDepth(width, height, false);
@@ -27,6 +27,7 @@ pub const SBuffer = struct {
             sbuf.shadow.height = height;
             sbuf.shadow.format = 19; // DEPTH_COMPONENT_24BIT?
             sbuf.shadow.mipmaps = 1;
+            raylib.SetTextureFilter(sbuf.shadow, raylib.TEXTURE_FILTER_TRILINEAR);
 
             // Attach depth texture to FBO
             rlgl.rlFramebufferAttach(sbuf.id, sbuf.shadow.id, rlgl.RL_ATTACHMENT_DEPTH, rlgl.RL_ATTACHMENT_TEXTURE2D, 0);

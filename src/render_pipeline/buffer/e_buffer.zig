@@ -26,6 +26,7 @@ pub const EBuffer = struct {
             ebuf.edge.height = height;
             ebuf.edge.format = raylib.PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
             ebuf.edge.mipmaps = 1;
+            raylib.SetTextureFilter(ebuf.edge, raylib.TEXTURE_FILTER_TRILINEAR);
 
             // Attach color textures to FBO
             rlgl.rlFramebufferAttach(ebuf.id, ebuf.edge.id, rlgl.RL_ATTACHMENT_COLOR_CHANNEL0, rlgl.RL_ATTACHMENT_TEXTURE2D, 0);

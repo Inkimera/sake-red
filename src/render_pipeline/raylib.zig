@@ -4,6 +4,7 @@ pub usingnamespace @cImport({
     @cDefine("SUPPORT_HIGH_DPI", "1");
     @cInclude("raylib.h");
     @cInclude("raymath.h");
+    @cInclude("rlgl.h");
 });
 
 pub fn RenderTextureDPI() c_int {

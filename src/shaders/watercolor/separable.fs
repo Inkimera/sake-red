@@ -11,10 +11,10 @@ uniform sampler2D EDGE_TEXTURE;
 uniform float dir_x = 0.0;
 uniform float dir_y = 0.0;
 uniform float bleeding_threshold = 0.002;
-uniform float bleeding_radius = 5.0;
-uniform float edge_darkening_kernel = 5.0;
-uniform float gaps_overlaps_kernel = 7.0;
-uniform float[10] weights;
+uniform float bleeding_radius = 10.0;
+uniform float edge_darkening_kernel = 3.0;
+uniform float gaps_overlaps_kernel = 3.0;
+uniform float[20] weights;
 
 layout(location = 0) out vec4 finalStyle;
 layout(location = 1) out vec4 finalBleed;
@@ -32,7 +32,7 @@ vec3 edge_blur(
   // sample center pixel
   vec3 sedge = texture(EDGE_TEXTURE, screen_uv).rgb;
   // calculate darkening width
-  float edge_width_ctrl = texture(CONTROL_TEXTURE, screen_uv).g;
+  float edge_width_ctrl = texture(CONTROL_TEXTURE, screen_uv).b;
   //float edge_width_ctrl = 1.0;
   float painted_width = mix(0.0, edge_darkening_kernel * 3.0, edge_width_ctrl);  // 3 times wider through local control
   float kernel_radius = max(1.0, (edge_darkening_kernel + painted_width));  // global + local control
@@ -121,7 +121,7 @@ vec4 color_bleed(
       }
       // bleed if necessary
       if (bleed > 0.0) {
-        blur += talbedo * weight;
+        blur += vec4(talbedo.rgb, blur_ctrl) * weight;
       } else {
         blur += scolor * weight;  // get source pixel color
       }

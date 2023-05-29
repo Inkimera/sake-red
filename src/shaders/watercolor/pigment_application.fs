@@ -7,10 +7,10 @@ uniform sampler2D STYLE_TEXTURE;
 uniform sampler2D SUBSTRATE_TEXTURE;
 uniform sampler2D CONTROL_TEXTURE;
 
-uniform vec3 substrate = vec3(1.0, 1.0, 1.0);
+uniform vec3 substrate = vec3(0.9, 0.9, 0.9);
 uniform float substrate_scale = 1.0;
-uniform float strength = 1.0;
-uniform float density = 1.0;
+uniform float strength = 0.5;
+uniform float density = 0.2;
 uniform float intensity = 1.0;
 
 layout(location = 0) out vec4 finalStyle;
@@ -29,10 +29,10 @@ void main()
   vec4 texelControl = texture(CONTROL_TEXTURE, fragTexCoord);
 
   // PIGMENT APPLICATION
-  float application = strength + ((1.0 - texelControl.g) * 0.5 - 0.5) * 2.0;
+  float application = strength + ((texelControl.g) * 2.0 - 1.0) * 2.0;
   float height = texelSubstrate.b * intensity;
   float dry_diff = application + height;
-  if (dry_diff < 1.0) {
+  if (dry_diff < 0.0) {
     finalStyle = vec4(mix(texelStyle.rgb, substrate, clamp(abs(dry_diff), 0.0, 1.0)), texelStyle.a);
   } else {
     // default is granulated (// 1.2 granulate, 0.2 default)

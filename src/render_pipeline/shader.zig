@@ -38,11 +38,11 @@ pub const PainterlyShaderConfig = struct {
             .shadow = [3]f32{ 0.0, 0.0, 0.0 },
             .emission = [3]f32{ 0.0, 0.0, 0.0 },
             .substrate = [3]f32{ 1.0, 1.0, 1.0 },
-            .diffuse_factor = 0.8,
+            .diffuse_factor = 1.0,
             .shade_wrap = 0.5,
             .dark_edges = 0.5,
-            .dilute = 0.8,
-            .dilute_area = 0.9,
+            .dilute = 0.5,
+            .dilute_area = 0.99,
             .high_area = 0.0,
             .specular_intensity = 0.05,
             .specular_diffuse = 0.99,
@@ -54,8 +54,9 @@ pub const PainterlyShaderConfig = struct {
         };
     }
 
-    pub fn uniforms() [24]ShaderUniform {
+    pub fn uniforms() [25]ShaderUniform {
         return [_]ShaderUniform{
+            ShaderUniform{ .name = "matLight" },
             ShaderUniform{ .name = "camera" },
             ShaderUniform{ .name = "ambient" },
             ShaderUniform{ .name = "albedo" },
@@ -78,8 +79,9 @@ pub const PainterlyShaderConfig = struct {
             ShaderUniform{ .name = "uv_wrap_y" },
             ShaderUniform{ .name = "ALBEDO_TEXTURE" },
             ShaderUniform{ .name = "SPECULAR_TEXTURE" },
-            ShaderUniform{ .name = "NORMAL_TEXTURE" },
+            //ShaderUniform{ .name = "NORMAL_TEXTURE" },
             ShaderUniform{ .name = "CONTROL_TEXTURE" },
+            ShaderUniform{ .name = "SHADOWMAP_TEXTURE" },
         };
     }
 
@@ -114,9 +116,10 @@ pub const ToonShaderConfig = struct {
 
     shadow_wrap: f32,
     shadow_blur: f32,
+    shadow_scale: f32,
     underpaint_wrap: f32,
     underpaint_blur: f32,
-    //underpaint_bands: f32,
+    underpaint_bands: f32,
 
     specular_intensity: f32,
 
@@ -127,56 +130,59 @@ pub const ToonShaderConfig = struct {
 
     pub fn default() ToonShaderConfig {
         return ToonShaderConfig{
-            .ambient = [3]f32{ 0.1, 0.1, 0.1 },
+            .ambient = [3]f32{ 0.0, 0.0, 0.0 },
             .albedo = [3]f32{ 1.0, 1.0, 1.0 },
             .shadow = [3]f32{ 0.0, 0.0, 0.0 },
             .emission = [3]f32{ 0.0, 0.0, 0.0 },
-            //.substrate = [3]f32{ 1.0, 1.0, 1.0 },
-            .shadow_wrap = 0.3,
-            .shadow_blur = 0.2,
+            .shadow_wrap = 0.5,
+            .shadow_blur = 0.05,
+            .shadow_scale = 200.0,
             .underpaint_wrap = 0.5,
-            .underpaint_blur = 0.1,
-            //.underpaint_bands = 3.0,
-            .specular_intensity = 0.05,
+            .underpaint_blur = 0.01,
+            .underpaint_bands = 1.0,
+            .specular_intensity = 0.1,
             .disable_lighting = 0,
             .uv_wrap_x = 1.0,
             .uv_wrap_y = 1.0,
         };
     }
 
-    pub fn uniforms() [16]ShaderUniform {
+    pub fn uniforms() [19]ShaderUniform {
         return [_]ShaderUniform{
+            ShaderUniform{ .name = "matLight" },
             ShaderUniform{ .name = "camera" },
             ShaderUniform{ .name = "ambient" },
             ShaderUniform{ .name = "albedo" },
             ShaderUniform{ .name = "shadow" },
             ShaderUniform{ .name = "emission" },
-            //ShaderUniform{ .name = "substrate" },
             ShaderUniform{ .name = "shadow_wrap" },
             ShaderUniform{ .name = "shadow_blur" },
+            ShaderUniform{ .name = "shadow_scale" },
             ShaderUniform{ .name = "underpaint_wrap" },
             ShaderUniform{ .name = "underpaint_blur" },
-            //ShaderUniform{ .name = "underpaint_bands" },
+            ShaderUniform{ .name = "underpaint_bands" },
             ShaderUniform{ .name = "specular_intensity" },
             ShaderUniform{ .name = "disable_lighting" },
             ShaderUniform{ .name = "uv_wrap_x" },
             ShaderUniform{ .name = "uv_wrap_y" },
             ShaderUniform{ .name = "ALBEDO_TEXTURE" },
             ShaderUniform{ .name = "SPECULAR_TEXTURE" },
-            ShaderUniform{ .name = "NORMAL_TEXTURE" },
+            //ShaderUniform{ .name = "NORMAL_TEXTURE" },
+            ShaderUniform{ .name = "SHADOWMAP_TEXTURE" },
         };
     }
 
     pub fn apply(self: *ToonShaderConfig, shader: *Shader) void {
+        shader.setUniform("ambient", &self.ambient, raylib.SHADER_UNIFORM_VEC3);
         shader.setUniform("albedo", &self.albedo, raylib.SHADER_UNIFORM_VEC3);
         shader.setUniform("shadow", &self.shadow, raylib.SHADER_UNIFORM_VEC3);
         shader.setUniform("emission", &self.emission, raylib.SHADER_UNIFORM_VEC3);
-        //shader.setUniform("substrate", &self.substrate, raylib.SHADER_UNIFORM_VEC3);
         shader.setUniform("shadow_wrap", &self.shadow_wrap, raylib.SHADER_UNIFORM_FLOAT);
         shader.setUniform("shadow_blur", &self.shadow_blur, raylib.SHADER_UNIFORM_FLOAT);
+        shader.setUniform("shadow_scale", &self.shadow_scale, raylib.SHADER_UNIFORM_FLOAT);
         shader.setUniform("underpaint_wrap", &self.underpaint_wrap, raylib.SHADER_UNIFORM_FLOAT);
         shader.setUniform("underpaint_blur", &self.underpaint_blur, raylib.SHADER_UNIFORM_FLOAT);
-        //shader.setUniform("underpaint_bands", &self.underpaint_bands, raylib.SHADER_UNIFORM_FLOAT);
+        shader.setUniform("underpaint_bands", &self.underpaint_bands, raylib.SHADER_UNIFORM_FLOAT);
         shader.setUniform("specular_intensity", &self.specular_intensity, raylib.SHADER_UNIFORM_FLOAT);
         shader.setUniform("disable_lighting", &self.disable_lighting, raylib.SHADER_UNIFORM_INT);
         shader.setUniform("uv_wrap_x", &self.uv_wrap_x, raylib.SHADER_UNIFORM_FLOAT);
@@ -218,6 +224,12 @@ pub const Shader = struct {
                 value,
                 value_type,
             );
+        }
+    }
+
+    pub fn setUniformMatrix(self: *Shader, uniform: []const u8, mat: raylib.Matrix) void {
+        if (self.uniforms.get(uniform)) |loc| {
+            raylib.rlSetUniformMatrix(loc, mat);
         }
     }
 

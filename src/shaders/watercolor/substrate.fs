@@ -11,7 +11,7 @@ uniform sampler2D CONTROL_TEXTURE;
 uniform sampler2D SUBSTRATE_TEXTURE;
 uniform sampler2D DEPTH_TEXTURE;
 
-uniform vec3 substrate = vec3(1.0, 1.0, 1.0);
+uniform vec3 substrate = vec3(0.9, 0.9, 0.9);
 uniform float substrate_scale = 1.0;
 uniform float substrate_distortion = 0.3;
 uniform float dir = 0.0;

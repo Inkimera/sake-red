@@ -15,7 +15,7 @@ layout(location = 0) out vec4 finalStyle;
 void main()
 {
   vec4 texelStyle = texture(STYLE_TEXTURE, fragTexCoord);
-  vec2 texelEdge = texture(EDGE_TEXTURE, fragTexCoord).gr;
+  vec2 texelEdge = texture(EDGE_TEXTURE, fragTexCoord).ga;
   vec4 texelControl = texture(CONTROL_TEXTURE, fragTexCoord);
 
   // EDGE MODULATION
